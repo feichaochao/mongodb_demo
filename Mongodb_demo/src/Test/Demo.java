@@ -3,51 +3,43 @@ package Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-
 import Util.MongodbHelper;
 import pojo.Person;
-import pojo.User;
 
 public class Demo {
-	
 	
 	private final static  String HOST="127.0.0.1";
     private final static  int PORT=27017;
     private final static String DBNAME="test";
-    
-    
+	
+
 	
 	public static void main(String[] args) {
 		
 		 String collName="person";
-         MongodbHelper helper=new MongodbHelper(HOST,PORT,DBNAME);
+		 MongodbHelper helper=new MongodbHelper(HOST,PORT,DBNAME);
+		 
          //创建
 //         boolean flag= helper.createColl(collName);
 //         System.out.println(flag?"0":"1");
          //新增
-//         add(collName, helper);
+         add(collName, helper);
          addList(collName, helper);
-//         Object getlist = helper.getlist(collName);
-//         System.err.println(getlist);
          
+         //查询
+         Person query= new Person();
+         query.setName("lmy");
+         Person person = helper.getdbobj(collName, query,Person.class);
+         System.err.println(person);
+         List<Person> list = helper.getdbobjList(collName, query,Person.class);
+         for (Person p : list) {
+        	 System.out.println(p);
+		 }
+         
+       //删除
+       boolean flag=helper.rvdbobj(collName, query);
+       System.err.println(flag);
 
-//         Person query= new Person();
-//         query.setName("lmy");
-//         Person person = helper.getdbobj(collName, query,Person.class);
-//         List<Person> list = helper.getdbobjList(collName, query,Person.class);
-//         for (Person p : list) {
-//        	 System.out.println(p);
-//		}
-//       boolean flag=helper.rvdbobj(collName, query);
-//       System.out.println(flag);
-
-
-         
-         
-         
-         
          
 	}
 

@@ -26,7 +26,7 @@ public class MongodbHelper {
 	private  DB db=null;
 	
 	
-    private  String dbname=null;
+	private  String dbname=null;
     private  String host=null;
     private  int port=27017;
     
@@ -47,7 +47,7 @@ public class MongodbHelper {
 	 * @param port
 	 * @return
 	 */
-	public synchronized Mongo createInstence(String host,int port){
+	public  synchronized Mongo createInstence(String host,int port){
 		
 		if(mo==null){
 			try {
@@ -63,10 +63,10 @@ public class MongodbHelper {
 		return mo;
 	}
 	
-	/*
-	 * 连接数据库
+	/**
+	 * 连接数据库 
 	 */
-	private synchronized DB connDb(){
+	private  synchronized DB connDb(){
 		
 		if(mo==null){
 			logger.error("Mongo 为空");
@@ -92,7 +92,7 @@ public class MongodbHelper {
 	    	connDb();
 	    }
 		if(db.collectionExists(collName)){
-			logger.error("已经存在");
+			logger.error("collName为{},已经存在",collName);
 			return flag;
 		}else{
 			try{
@@ -133,7 +133,7 @@ public class MongodbHelper {
 	 * @param bean
 	 * @return
 	 */
-	public boolean addDbobject(String collName,Object bean){
+	public <T> boolean addDbobject(String collName,T bean){
 		Gson gson = new Gson();
 		DBObject obj = (DBObject) JSON.parse(gson.toJson(bean));
 		DBCollection coll=getColl(collName);
@@ -141,6 +141,8 @@ public class MongodbHelper {
 		   coll.insert(obj,WriteConcern.NONE);
 		   return true;
 		}catch (Exception e) {
+			e.printStackTrace();
+			logger.error("添加失败!",e);
 			return false;
 		}finally{
 			this.closeMongo();
@@ -156,16 +158,18 @@ public class MongodbHelper {
 	 */
 	public <T> boolean addDbobject(String collName,List<T> objlist){
 		List<DBObject> list=new ArrayList<>();
+		DBCollection coll=getColl(collName);
 		Gson gson = new Gson();
 		for (T t : objlist) {
 			DBObject obj = (DBObject) JSON.parse(gson.toJson(t));
 			list.add(obj);
 		}
-		DBCollection coll=getColl(collName);
 		try{
 		   coll.insert(list);
 		   return true;
 		}catch (Exception e) {
+			e.printStackTrace();
+			logger.error("添加失败!",e);
 			return false;
 		}finally{
 			this.closeMongo();
@@ -175,7 +179,7 @@ public class MongodbHelper {
 	
 
 	/**
-	 * 查询全部
+	 * 查询全部   目前并没有多大用处,可加长度限制
 	 * @param collName
 	 * @param bean
 	 * @return
@@ -192,6 +196,7 @@ public class MongodbHelper {
 			return list;
 		}catch (Exception e) {
 			// TODO: handle exception
+			e.printStackTrace();
 			logger.error("查询失败!",e);
 			return null;
 		}finally{
@@ -212,9 +217,13 @@ public class MongodbHelper {
 			Gson gson = new Gson();
 			DBObject bobj = (DBObject) JSON.parse(gson.toJson(queryBean));
 		    DBObject ob=coll.findOne(bobj);
+		    if(ob==null){
+		    	return null;
+		    }
 			return gson.fromJson(ob.toString(),bean);
 		}catch (Exception e) {
 			// TODO: handle exception
+			e.printStackTrace();
 			logger.error("查询失败!",e);
 			return null;
 		}finally{
@@ -243,6 +252,7 @@ public class MongodbHelper {
 		}catch (Exception e) {
 			// TODO: handle exception
 			logger.error("查询失败!",e);
+			e.printStackTrace();
 			return null;
 		}finally{
 			this.closeMongo();
@@ -256,7 +266,9 @@ public class MongodbHelper {
 	 * @return
 	 */
 	public <T> boolean rvdbobj(String collName,T bean){
-		
+		if(bean==null){
+			return false;
+		}
 		DBCollection coll=getColl(collName);
 		try{
 			Gson gson = new Gson();
@@ -265,6 +277,7 @@ public class MongodbHelper {
 			return true;
 		}catch (Exception e) {
 			logger.error("删除失败!",e);
+			e.printStackTrace();
 			return false;
 		}finally{
 			this.closeMongo();
@@ -279,8 +292,10 @@ public class MongodbHelper {
 	 * @return
 	 */
 	public <T> boolean upbobj(String collName,T queryBean,T bean){
+		if(queryBean==null || bean==null){
+			return false;
+		}
 		DBCollection coll=getColl(collName);
-		
 		try{
 			Gson gson = new Gson();
 			DBObject update = (DBObject) JSON.parse(gson.toJson(bean));
@@ -289,6 +304,7 @@ public class MongodbHelper {
 		    return true;
 		}catch (Exception e) {
 			logger.error("更新失败!",e);
+			e.printStackTrace();
 			return false;
 		}finally{
 			this.closeMongo();
@@ -299,10 +315,11 @@ public class MongodbHelper {
 	
 	
 	/**
-	 * 关闭
+	 * 关闭(其实当你new Mongo()的时候,就创建了一个连接池)
 	 */
 	public  void closeMongo(){
-		 mo.close();
+//		 mo.close();
+//		 mo=null;
 	}
 	
 }
